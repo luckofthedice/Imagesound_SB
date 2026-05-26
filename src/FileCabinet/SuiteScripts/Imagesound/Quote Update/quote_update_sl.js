@@ -11,7 +11,7 @@
 
 define(['N/record', 'N/url', 'N/log'], function(record, url, log) {
 
-    // Ensure the script and deployment IDs match those in the NetSuite account. Update if needed.
+    // Suitelet script and deployment ID's.  Ensure ID are the same in prod and sandbox
     const scriptId = 'customscript_quote_update_sl';
     const deploymentId = 'customdeploy_quote_update_sl';
 
@@ -120,6 +120,10 @@ define(['N/record', 'N/url', 'N/log'], function(record, url, log) {
             sublistId: 'item'
         });
         
+        oldQuote.setValue({
+            fieldId: 'custbody_nb2_quote_cancel_date',
+            value: parseLocalDate(endDate)
+        });
         for (let l = 0; l < oldLines; l++) {
             oldQuote.selectLine({
                 sublistId: 'item',
@@ -213,7 +217,7 @@ define(['N/record', 'N/url', 'N/log'], function(record, url, log) {
 
         }
         newQuote.setValue ({
-            fieldId: 'custbody_original_quote',
+            fieldId: 'custbody_replacement_quote',
             value: oldQuoteId
         })
         const newQuoteId = newQuote.save();

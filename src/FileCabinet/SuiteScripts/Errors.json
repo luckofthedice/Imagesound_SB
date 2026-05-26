@@ -1,0 +1,21 @@
+{
+    "type": "error.SuiteScriptError",
+    "name": "SSS_INVALID_SRCH_OPERATOR",
+    "message": "An nlobjSearchFilter contains an invalid operator, or is not in proper syntax: custbody_nb2_zab_subscription_link.",
+    "id": "",
+    "stack": [
+        "Error\n at RecordInvoker.save (suitescript/resources/javascript/record/serverRecordService.js:384:13)\n at NetSuiteObject.thenableFunction() (suitescript/resources/javascript/record/proxy.js:115:24)\n at handlePost (/SuiteScripts/Imagesound/Quote Update/quote_update_sl.js:138:37)\n at Object.onRequest (/SuiteScripts/Imagesound/Quote Update/quote_update_sl.js:23:13)"
+    ],
+    "cause": {
+        "type": "internal error",
+        "code": "SSS_INVALID_SRCH_OPERATOR",
+        "details": "An nlobjSearchFilter contains an invalid operator, or is not in proper syntax: custbody_nb2_zab_subscription_link.",
+        "userEvent": null,
+        "stackTrace": [
+            "Error\n at RecordInvoker.save (suitescript/resources/javascript/record/serverRecordService.js:384:13)\n at NetSuiteObject.thenableFunction() (suitescript/resources/javascript/record/proxy.js:115:24)\n at handlePost (/SuiteScripts/Imagesound/Quote Update/quote_update_sl.js:138:37)\n at Object.onRequest (/SuiteScripts/Imagesound/Quote Update/quote_update_sl.js:23:13)"
+        ],
+        "notifyOff": false
+    },
+    "notifyOff": false,
+    "userFacing": true
+}

@@ -183,6 +183,7 @@ define(['N/search', 'N/format', 'N/url', 'N/record', 'N/https'],
             const customerId = newRecord.getValue({ fieldId: 'entity' });
             const zsId = newRecord.getValue({ fieldId: 'custbody_nb2_zab_subscription_link' });
             log.debug('zsId', zsId);
+            if (!zsId) return; // No ZAB subscription linked — skip invoice search to avoid SSS_INVALID_SRCH_OPERATOR
             const lineFilters = newlyEndedLines.reduce(function(acc, { item, description, rate, endDate }, i) {
                 if (i > 0) acc.push('OR');
                 acc.push([
