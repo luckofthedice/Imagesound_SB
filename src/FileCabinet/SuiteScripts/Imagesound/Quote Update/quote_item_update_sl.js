@@ -318,7 +318,7 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
             newQuote.commitLine({ sublistId: 'item' });
         }
 
-        newQuote.setValue({ fieldId: 'custbody_replacement_quote', value: oldQuoteId });
+        newQuote.setValue({ fieldId: 'custbody_original_quote', value: oldQuoteId });
         const newQuoteId = newQuote.save();
         log.debug('New Quote Created', 'ID: ' + newQuoteId);
 

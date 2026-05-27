@@ -218,7 +218,7 @@ define(['N/record', 'N/url', 'N/log'], function(record, url, log) {
 
         }
         newQuote.setValue ({
-            fieldId: 'custbody_replacement_quote',
+            fieldId: 'custbody_original_quote',
             value: oldQuoteId
         })
         const newQuoteId = newQuote.save();

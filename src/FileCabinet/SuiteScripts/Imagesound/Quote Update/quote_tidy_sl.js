@@ -205,7 +205,7 @@ define(['N/log', 'N/record', 'N/search', 'N/ui/serverWidget', 'N/format'], (log,
             newQuote.commitLine({ sublistId: 'item' });
         }
 
-        newQuote.setValue({ fieldId: 'custbody_replacement_quote', value: oldQuoteId });
+        newQuote.setValue({ fieldId: 'custbody_original_quote', value: oldQuoteId });
         const newQuoteId = newQuote.save();
         log.audit('Tidy Quote — new quote created', { oldQuoteId, newQuoteId });
 
