@@ -32,6 +32,7 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
 
     function handleGet(context) {
         const quoteId = context.request.parameters.quoteId;
+        log.debug('Item Update Quote ID', quoteId);
 
         const rec = record.load({
             type: record.Type.ESTIMATE,
@@ -49,12 +50,12 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
             const itemText  = rec.getSublistText ({ sublistId: 'item', fieldId: 'item',                  line: i });
             const rate      = rec.getSublistValue({ sublistId: 'item', fieldId: 'rate',                  line: i });
             const frequency = rec.getSublistValue({ sublistId: 'item', fieldId: 'custcol_nb2_frequency', line: i });
-            const musConan  = rec.getSublistValue({ sublistId: 'item', fieldId: 'custcol_nb2_mus_con',   line: i });
+            const musicContent = rec.getSublistValue({ sublistId: 'item', fieldId: 'custcol_nb2_mus_con',   line: i });
 
-            const key = item + '||' + rate + '||' + frequency + '||' + musConan;
+            const key = item + '||' + rate + '||' + frequency + '||' + musicContent;
             if (!seen.has(key)) {
                 seen.set(key, true);
-                uniqueLines.push({ item, itemText, rate, frequency, musConan });
+                uniqueLines.push({ item, itemText, rate, frequency, musicContent});
             }
         }
 
@@ -63,6 +64,7 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
         // ── Create form ──────────────────────────────────────────────────────────
 
         const form = serverWidget.createForm({ title: 'Update Quote Items' });
+        form.clientScriptModulePath = '/SuiteScripts/Imagesound/Quote Update/quote_update_cs.js';
 
         // Hidden: original quote ID
         const quoteIdFld = form.addField({
@@ -129,11 +131,12 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
         currentRateFld.updateDisplayType({ displayType: serverWidget.FieldDisplayType.DISABLED });
 
         // New rate
-        sublist.addField({
+        const newRateFld = sublist.addField({
             id:    'custpage_new_rate',
             type:  serverWidget.FieldType.FLOAT,
             label: 'New Rate'
         });
+        newRateFld.updateDisplayType({ displayType: serverWidget.FieldDisplayType.ENTRY });
 
         // Hidden: original rate (used for key matching in POST)
         const origRateFld = sublist.addField({
@@ -147,22 +150,10 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
         const freqFld = sublist.addField({
             id:    'custpage_frequency',
             type:  serverWidget.FieldType.SELECT,
-            label: 'Frequency'
+            label: 'Frequency',
+            source: 'customrecordzab_charge_schedules'
         });
-        freqFld.addSelectOption({ value: '',   text: '-- Select --' });
-        freqFld.addSelectOption({ value: '1',  text: '1a'  });
-        freqFld.addSelectOption({ value: '2',  text: '2a'  });
-        freqFld.addSelectOption({ value: '3',  text: '3a'  });
-        freqFld.addSelectOption({ value: '4',  text: '4a'  });
-        freqFld.addSelectOption({ value: '5',  text: '5a'  });
-        freqFld.addSelectOption({ value: '6',  text: '6a'  });
-        freqFld.addSelectOption({ value: '7',  text: '7a'  });
-        freqFld.addSelectOption({ value: '8',  text: '8a'  });
-        freqFld.addSelectOption({ value: '9',  text: '9a'  });
-        freqFld.addSelectOption({ value: '10', text: '10a' });
-        freqFld.addSelectOption({ value: '11', text: '11a' });
-        freqFld.addSelectOption({ value: '12', text: '12a' });
-        freqFld.addSelectOption({ value: '13', text: '1r'  });
+
 
         // Hidden: original frequency
         const origFreqFld = sublist.addField({
@@ -173,16 +164,13 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
         origFreqFld.updateDisplayType({ displayType: serverWidget.FieldDisplayType.HIDDEN });
 
         // Music content type
-        const musConanFld = sublist.addField({
+        const musContentFld = sublist.addField({
             id:    'custpage_mus_conan',
             type:  serverWidget.FieldType.SELECT,
-            label: 'Music Content Type'
+            label: 'Music Content Type',
+            source: 'customlist_nb2_mus_con_lis'
         });
-        musConanFld.addSelectOption({ value: '',  text: '-- Select --'    });
-        musConanFld.addSelectOption({ value: '1', text: 'Copyright'       });
-        musConanFld.addSelectOption({ value: '2', text: 'Rights Free'     });
-        musConanFld.addSelectOption({ value: '3', text: 'Covers'          });
-        musConanFld.addSelectOption({ value: '4', text: 'Advertising Only'});
+
 
         // Hidden: original music content type
         const origMusFld = sublist.addField({
@@ -206,9 +194,9 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
                 sublist.setSublistValue({ id: 'custpage_frequency',      line: i, value: String(line.frequency) });
                 sublist.setSublistValue({ id: 'custpage_orig_frequency', line: i, value: String(line.frequency) });
             }
-            if (line.musConan) {
-                sublist.setSublistValue({ id: 'custpage_mus_conan',      line: i, value: String(line.musConan) });
-                sublist.setSublistValue({ id: 'custpage_orig_mus_conan', line: i, value: String(line.musConan) });
+            if (line.musicContent) {
+                sublist.setSublistValue({ id: 'custpage_mus_conan',      line: i, value: String(line.musicContent) });
+                sublist.setSublistValue({ id: 'custpage_orig_mus_conan', line: i, value: String(line.musicContent) });
             }
         });
 
@@ -235,7 +223,7 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
         const lineCount = context.request.getLineCount({ group: 'custpage_lines' });
         log.debug('POST Data', { quoteId, endDate, startDate, lineCount });
 
-        // Build update map: originalKey → { newItem, newRate, newFrequency, newMusConan }
+        // Build update map: originalKey → { newItem, newRate, newFrequency, newMusicContent}
         const updateMap = new Map();
         for (let i = 0; i < lineCount; i++) {
             const origItem = context.request.getSublistValue({ group: 'custpage_lines', name: 'custpage_orig_item',      line: i });
@@ -253,7 +241,7 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
                 newItem:      newItem,
                 newRate:      parseFloat(newRate),
                 newFrequency: newFreq,
-                newMusConan:  newMus
+                newmusicContent:  newMus
             });
             log.debug('Update Map Entry', { key, newItem, newRate, newFreq, newMus });
         }
@@ -273,20 +261,33 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
             oldQuote.commitLine({ sublistId: 'item' });
         }
 
-        const oldQuoteId = oldQuote.save();
+        // The nb2_quote_ue afterSubmit fires after the commit, so the record is always
+        // saved even if the UE throws. Catch UE errors and fall back to the original ID.
+        let oldQuoteId;
+        try {
+            oldQuoteId = oldQuote.save();
+        } catch (ueError) {
+            log.error('UE error on old quote save (record was committed)', ueError.message || String(ueError));
+            oldQuoteId = parseInt(quoteId, 10);
+        }
 
         // ── Copy quote and apply updates ──────────────────────────────────────────
 
         const newQuote     = record.copy({ type: record.Type.ESTIMATE, id: oldQuoteId, isDynamic: true });
+        // Clear the cancelation date on the new quote in case it was copied from the old quote.
+        newQuote.setValue({
+            fieldId: 'custbody_nb2_quote_cancel_date',
+            value: ''
+        })
         const newLineCount = newQuote.getLineCount({ sublistId: 'item' });
 
         for (let n = 0; n < newLineCount; n++) {
             const itemId   = newQuote.getSublistValue({ sublistId: 'item', fieldId: 'item',                  line: n });
             const rate     = newQuote.getSublistValue({ sublistId: 'item', fieldId: 'rate',                  line: n });
             const freq     = newQuote.getSublistValue({ sublistId: 'item', fieldId: 'custcol_nb2_frequency', line: n });
-            const musConan = newQuote.getSublistValue({ sublistId: 'item', fieldId: 'custcol_nb2_mus_con',   line: n });
+            const musicContent= newQuote.getSublistValue({ sublistId: 'item', fieldId: 'custcol_nb2_mus_con',   line: n });
 
-            const key   = itemId + '||' + rate + '||' + freq + '||' + musConan;
+            const key   = itemId + '||' + rate + '||' + freq + '||' + musicContent;
             const entry = updateMap.get(key);
 
             newQuote.selectLine({ sublistId: 'item', line: n });
@@ -305,8 +306,8 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
                     newQuote.setCurrentSublistValue({ sublistId: 'item', fieldId: 'custcol_nb2_frequency', value: entry.newFrequency });
                 }
                 // Update music content type
-                if (entry.newMusConan !== undefined) {
-                    newQuote.setCurrentSublistValue({ sublistId: 'item', fieldId: 'custcol_nb2_mus_con', value: entry.newMusConan });
+                if (entry.newMusicContent!== undefined) {
+                    newQuote.setCurrentSublistValue({ sublistId: 'item', fieldId: 'custcol_nb2_mus_con', value: entry.newMusicContent});
                 }
             }
 
@@ -317,7 +318,7 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
             newQuote.commitLine({ sublistId: 'item' });
         }
 
-        newQuote.setValue({ fieldId: 'custbody_original_quote', value: oldQuoteId });
+        newQuote.setValue({ fieldId: 'custbody_replacement_quote', value: oldQuoteId });
         const newQuoteId = newQuote.save();
         log.debug('New Quote Created', 'ID: ' + newQuoteId);
 
@@ -325,7 +326,10 @@ define(['N/record', 'N/url', 'N/ui/serverWidget', 'N/format', 'N/log'],
             record.submitFields({
                 type:   record.Type.ESTIMATE,
                 id:     oldQuoteId,
-                values: { custbody_updated_quote: newQuoteId }
+                values: { 
+                    'custbody_updated_quote': newQuoteId,
+                    'custbody_nb2_quote_cancel_date': parseLocalDate(endDate)
+                 }
             });
         } catch (e) {
             log.error('Error updating original quote', e);

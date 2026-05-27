@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+<!DOCTYPE pdf PUBLIC "-//big.faceless.org//report" "report-1.1.dtd">
+<pdf>
+<head>
+    <link name="NotoSans" type="font" subtype="truetype" src="${nsfont.NotoSans_Regular}" src-bold="${nsfont.NotoSans_Bold}" src-italic="${nsfont.NotoSans_Italic}" src-bolditalic="${nsfont.NotoSans_BoldItalic}" bytes="2" />
+    <#if .locale == "zh_CN">
+        <link name="NotoSansCJKsc" type="font" subtype="opentype" src="${nsfont.NotoSansCJKsc_Regular}" src-bold="${nsfont.NotoSansCJKsc_Bold}" bytes="2" />
+    <#elseif .locale == "zh_TW">
+        <link name="NotoSansCJKtc" type="font" subtype="opentype" src="${nsfont.NotoSansCJKtc_Regular}" src-bold="${nsfont.NotoSansCJKtc_Bold}" bytes="2" />
+    <#elseif .locale == "ja_JP">
+        <link name="NotoSansCJKjp" type="font" subtype="opentype" src="${nsfont.NotoSansCJKjp_Regular}" src-bold="${nsfont.NotoSansCJKjp_Bold}" bytes="2" />
+    <#elseif .locale == "ko_KR">
+        <link name="NotoSansCJKkr" type="font" subtype="opentype" src="${nsfont.NotoSansCJKkr_Regular}" src-bold="${nsfont.NotoSansCJKkr_Bold}" bytes="2" />
+    <#elseif .locale == "th_TH">
+        <link name="NotoSansThai" type="font" subtype="opentype" src="${nsfont.NotoSansThai_Regular}" src-bold="${nsfont.NotoSansThai_Bold}" bytes="2" />
+    </#if>
+    <macrolist>
+        <macro id="nlheader">
+            <table class="header" style="width: 100%;">
+                <tr>
+                    <td style="vertical-align: top;" rowspan="2">
+                        <#if companyInformation.logoUrl?length != 0>
+                            <div style="width: 180px; height: 35px; margin: 7px 7px 4px 0px;"><@filecabinet nstype="image" style="width: 180px; height: 35px;" src="${companyInformation.logoUrl}" /></div>
+                        </#if>
+                    </td>
+                    <td align="right"><span class="title">${record@title}</span> <span class="number">#${record.invoicegroupnumber}</span></td>
+                </tr>
+                <tr>
+                    <td align="right">${record.trandate}</td>
+                </tr>
+            </table>
+        </macro>
+        <macro id="footer">
+                    <table class="footer" width="100%">
+                        <tr>
+                            <td colspan="5" >
+                                Lloyds Bank Plc<br/>
+                                1 High Street<br/>
+                                Sheffield<br/>
+                                S1 2GA<br/>
+                                Acc No: 57557868<br/>
+                                Sort Code: 30-97-51<br/>
+                            </td>                            
+                            <td >
+                                <br/>
+                                <br/>
+                                Company Registration No: 04291389<br/>
+                                EPRN WEE/KF3864QV <br/>
+                                VAT Reg No: 815 8636 24<br/>
+                                Page: <pagenumber/> of <totalpages/>
+                            </td>
+                        </tr>
+                    </table>
+                </macro>
+    </macrolist>
+    <style>
+        * {
+            <#if .locale == "zh_CN"> font-family: NotoSans, NotoSansCJKsc, sans-serif;
+            <#elseif .locale == "zh_TW"> font-family: NotoSans, NotoSansCJKtc, sans-serif;
+            <#elseif .locale == "ja_JP"> font-family: NotoSans, NotoSansCJKjp, sans-serif;
+            <#elseif .locale == "ko_KR"> font-family: NotoSans, NotoSansCJKkr, sans-serif;
+            <#elseif .locale == "th_TH"> font-family: NotoSans, NotoSansThai, sans-serif;
+            <#else> font-family: NotoSans, sans-serif;
+            </#if>
+        }
+        .footer td { 
+            font-size: 8pt; 
+            border: none; 
+        }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { padding: 4px; border: 1px solid #333333; letter-spacing: normal; text-justify: none; } 
+        .header td { vertical-align: top; border: none; }
+        .body th { background-color: #d3d3d3; font-weight: bold; text-align: center; } 
+        .body td { text-align: center; } 
+        .left-align { text-align: left !important; }
+        .right-align { text-align: right !important; }
+    </style>
+</head>
+<body header="nlheader" footer="footer" header-height="1in" footer-height="30pt" padding="0.5in" size="Letter">
+    <table style="margin-bottom: 10px; border: none;">
+        <tr>
+            <td style="width: 58%; border: none;" class="left-align"><strong>${companyInformation.companyName}</strong><br /><span style="white-space: normal;">${companyInformation.addressText}</span></td>
+            <td style="width: 42%; border: none;" class="left-align"><strong>Group PO#</strong><br />${record.ponumber}</td>
+        </tr>
+    </table>
+
+    <table style="margin-top: 10px; border: none;">
+        <tr>
+            <td style="width: 40%; border: none;">
+                <table style="border: none;">
+                    <tr><td style="font-size: 13pt; font-weight: bold; border: none; padding: 0;" class="left-align">${record.billaddress@label}</td></tr>
+                    <tr><td style="border: none; padding: 0;" class="left-align">${record.billaddress}</td></tr>
+                </table>
+            </td>
+            <td style="width: 60%; border: none;" align="right">
+                <table style="width: 250pt; border: none;">
+                    <tr>
+                        <td style="background-color: #d3d3d3; font-weight: bold;">${record.amountpaid@label}</td>
+                        <td align="right" class="right-align">${record.amountpaid}</td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #d3d3d3; font-weight: bold;">${record.amountdue@label}</td>
+                        <td align="right" class="right-align">${record.amountdue}</td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #d3d3d3; font-weight: bold;">${record.total@label}</td>
+                        <td align="right" class="right-align">${record.total}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table style="margin-top: 10px; border: none;">
+        <tr><td style="border: none;" class="left-align"><strong>${label.primaryinformation}</strong></td></tr>
+    </table>
+
+    <table class="body" style="margin-top: 10px;">
+        <thead>
+            <tr style="background-color: #d3d3d3;">
+                <th width="30%">${record.customer@label}</th>
+                <th width="20%">${record.trandate@label}</th>
+                <th width="15%">${record.terms@label}</th>
+                <th width="20%">${record.duedate@label}</th>
+                <th width="15%">${record.currency@label}</th>
+            </tr>
+        </thead>
+        <tr>
+            <td class="left-align">${record.customername}</td>
+            <td>${record.trandate}</td>
+            <td>${record.terms}</td>
+            <td>${record.duedate}</td>
+            <td>${record.currency}</td>
+        </tr>
+    </table>
+
+    <#if groupedinvoices_summary?has_content>
+        <table style="margin-top: 20px; border: none;">
+            <tr><td style="border: none;" class="left-align"><strong>${label.invoicegroupsummary}</strong></td></tr>
+        </table>
+        <table class="body" style="margin-top: 10px;">
+            <thead>
+                <tr style="background-color: #d3d3d3;">
+                    <th colspan="3">${label.invoicenum}</th>
+                    <th colspan="2">${label.invoicedate}</th>
+                    <th colspan="3">Description</th>
+                    <th colspan="2">${label.amount}</th>
+                </tr>
+            </thead>
+            <#list groupedinvoices_summary as invoice_summary>
+                <tr>
+                    <td class="left-align" colspan="3">${invoice_summary.invoicenum?replace("Invoice #", "")}</td>
+                    <td colspan="2">${invoice_summary.trandate}</td>
+                    <td class="left-align" colspan="3">${invoice_summary.memo}</td>
+                    <td class="right-align" colspan="2">${invoice_summary.fxamount}</td>
+                </tr>
+            </#list>
+        </table>
+    </#if>
+
+    <table style="width: 100%; margin-top: 10px; border: none;">
+        <tr>
+            <td style="border: none;" colspan="4">&nbsp;</td>
+            <td style="background-color: #d3d3d3; font-weight: bold; width: 100pt;">${record.taxtotal@label}</td>
+            <td style="width: 80pt;" align="right" class="right-align">${record.taxtotal}</td>
+        </tr>
+        <tr>
+            <td style="border: none;" colspan="4">&nbsp;</td>
+            <td style="background-color: #d3d3d3; font-weight: bold;">${record.total@label}</td>
+            <td align="right" class="right-align">${record.total}</td>
+        </tr>
+    </table>
+</body>
+</pdf>

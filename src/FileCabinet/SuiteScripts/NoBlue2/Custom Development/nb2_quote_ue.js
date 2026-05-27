@@ -91,6 +91,7 @@ define(['N/search', 'N/format', 'N/url', 'N/record', 'N/https'],
                 });
 
                 if (existing) {
+                    if (!Array.isArray(existing.zones)) existing.zones = [];
                     existing.zones.push({ site, player, zone });
                 } else {
                     newlyEndedLines.push({ item, itemName, description, rate, endDate, chargeSchedule, zones: [{ site, player, zone }] });
@@ -146,7 +147,10 @@ define(['N/search', 'N/format', 'N/url', 'N/record', 'N/https'],
                 });
 
                 if (existing) {
-                    existing.zones.push({ site, player, zone });
+                    if (existing.zones) {
+                        existing.zones.push({ site, player, zone });
+                    }
+                    
                 } else {
                     newLineUniqueKeys.push({ item, itemName, description, rate, startDate, chargeSchedule, zones: [{ site, player, zone }] });
                 }

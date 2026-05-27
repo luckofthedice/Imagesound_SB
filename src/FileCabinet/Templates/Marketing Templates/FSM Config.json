@@ -1,0 +1,1686 @@
+{
+	"dependencies": {
+		"config_structure": "netsuite, mobile, scheduler, notifications",
+		"workflows": {
+			"project": "",
+			"case": "",
+			"transaction": ""
+		},
+		"scripts": {
+			"project": "",
+			"case": ""
+		},
+		"customrecords": {},
+		"custom_centres_tabs_categories": {}
+	},
+	"accounting": {},
+	"models/customer": {
+		"prototype": {
+			"assets": {
+				"asset": {
+					"record": "customrecord_nx_asset",
+					"filters": [
+						["custrecord_nx_asset_customer","anyof","${customer.id}"],"or",
+						["custrecord_nx_asset_customers","anyof","${customer.id}"]
+					]
+				}
+			}
+		}
+	},
+	"asset": {
+		"inheritFields": ["custrecord_nx_asset_longitude","custrecord_nx_asset_latitude","custrecord_nx_asset_address_text","custrecord_nx_asset_customer","custrecord_nx_asset_region","custrecord_nx_asset_time_zone","custrecord_nx_asset_address"]
+	},
+	"models/asset": {
+		"//": "Base Product Uniqueness: [Item Id] + [Serial || Address]",
+		"uniqueFormula": "formulatext:regexp_replace({custrecord_nx_asset_item.id} || ' ' || nvl({custrecord_nx_asset_serial}, {custrecord_nx_asset_address_text}), '['||chr(13)||chr(10)||chr(39)||']+', ' ')",
+		"uniqueTemplate": "${ ((item || '') + ' ' + (serial ? serial : addresstext || '')).replace(/['\\r\\n]+/g, ' ') }",
+		"prototype": {
+			"map": {
+				"//": "Naming Convention = SITE NAME/ADDRESS : ASSET TYPE : SERIAL",
+				"autoname": "formulatext: CASE WHEN {custrecord_nx_asset_type.id} = 1 THEN {custrecord_nx_asset_address_text} ELSE NVL2({custrecord_nx_asset_type}, {custrecord_nx_asset_type}||' : '||{custrecord_nx_asset_serial},{custrecord_nx_asset_serial}) END",
+				"customers": "formulatext[]:nvl({custrecord_nx_asset_customer.id}, 0)||','||nvl({custrecord_nx_asset_customers.id}, 0)"
+			}
+		}
+	},
+	"models/project": {
+		"//": "customform = internal ID of project form to be used when NextService creates projects. Note that defaults can only be hard coded, event map is not invoked as these scripts are run in Netsuite, not the mobile",
+		"prototype": {
+			"defaults": {
+				"customform": "380",
+				"//": "projectexpensetype to default if required",
+				"//projectexpensetype": -2
+			}
+		}
+	},
+	"models/case": {
+		"//": "customform = internal ID of case form to be used when NextService creates cases. Note that defaults can only be hard coded, event map is not invoked as these scripts are run in Netsuite, not the mobile",
+		"prototype": {
+			"defaults": {
+				"customform": "568",
+				"type": 7
+			}
+		}
+	},
+	"models/task": {
+		"prototype": {
+			"//": "customform = internal ID of task form to be used when NextService creates tasks. Note that defaults can only be hard coded, event map is not invoked as these scripts are run in Netsuite, not the mobile",
+			"defaults": {
+				"type": 3,
+				"customform": "566",
+				"start": "288000000",
+				"end": "43200000"
+			}
+		}
+	},
+	"models/time": {
+		"//": "customform = internal ID of time form to be used when NextService creates timebills. Note that defaults can only be hard coded, event map is not invoked as these scripts are run in Netsuite, not the mobile",
+		"prototype": {
+			"defaults": {
+				"customform": "565"
+			}
+		}
+	},
+	"models/quote": {
+		"//": "customform = internal ID of quote form to be used when NextService creates quotes within Netsuite. Note that defaults can only be hard coded, event map is not invoked as these scripts are run in Netsuite, not the mobile",
+		"prototype": {
+			"defaults": {
+				"customform": "215"
+			}
+		}
+	},
+	"models/salesorder": {
+		"//": "customform = internal ID of sales order form to be used when NextService creates sales orders via consumables. Note that defaults can only be hard coded, event map is not invoked as these scripts are run in Netsuite, not the mobile",
+		"prototype": {
+			"defaults": {
+				"customform": "231"
+			}
+		}
+	},
+	"models/itemfulfillment": {
+		"//": "customform = internal ID of item fulfillment form to be used when NextService creates item fulfillments. Note that defaults can only be hard coded, event map is not invoked as these scripts are run in Netsuite, not the mobile",
+		"prototype": {
+			"defaults": {
+				"customform": "223"
+			}
+		}
+	},
+	"models/invoice": {
+		"//": "customform = internal ID of invoice form to be used when NextService creates invoices. Note that defaults can only be hard coded, event map is not invoked as these scripts are run in Netsuite, not the mobile",
+		"prototype": {
+			"defaults": {
+				"customform": "222"
+			}
+		}
+	},
+	"models/expensereport": {
+		"//": "customform = internal ID of expense report form to be used when NextService creates expense reports. Note that defaults can only be hard coded, event map is not invoked as these scripts are run in Netsuite, not the mobile",
+		"prototype": {
+			"defaults": {
+				"customform": "260"
+			}
+		}
+	},
+	"models/transaction": {
+		"//": "retains values of these fields on transactions where the project field is updated as Netsuite behaviour sometimes resets these values when the project is set",
+		"prototype": {
+			"entityMap": {
+				"shipmethod": "shipmethod!",
+				"shipaddress": "shipaddress!",
+				"billaddress": "billaddress!",
+				"item": [{
+						"item": "item.item!",
+						"price": "item.price!",
+						"quantity": "item.quantity!",
+						"rate": "item.rate!",
+						"amount": "item.amount!",
+						"istaxable": "item.istaxable!",
+						"description": "item.description!"
+					}]
+			}
+		}
+	},
+	"views/case/projects": {
+		"options": {
+			"active": {
+				"map": {
+					"selected": "formulatext:case when {custentity_nx_project_type.id} in (9) then '2' when {custentity_nx_project_type.id} in (10) then '3' when {custentity_nx_project_type.id} in (11,12,13,14,15) then '4' else '' end"
+				}
+			},
+			"types": {
+				"filters": [
+					["internalid","anyof",
+						["9","10"]
+					]
+				],
+				"map": {
+					"selected": "formulatext:case when {internalid} = 9 then '1' else '' end"
+				}
+			}
+		}
+	},
+	"billing": {
+		"task": [{
+				"//": "Project Type = Billable, Rule 1 - Consumables Billable, Timebills Billable, Expenses Billable for all Case and Task Types",
+				"project": [9],
+				"case": true,
+				"task": true,
+				"billing": 1
+			},{
+				"//": "Catch All all non-billable",
+				"project": [true,false],
+				"case": [true,false],
+				"task": true,
+				"billing": 8
+			}],
+		"time": {
+			"item": {
+				"map": "formulatext:case when ${ task.billing } in (3,4,7,8) then 'F' else 'T' end"
+			}
+		},
+		"expense": {
+			"category": {
+				"map": "formulatext:case when ${ task.billing } in (2,4,6,8) then 'F' else 'T' end"
+			}
+		},
+		"consumable": {
+			"item": {
+				"map": "formulatext:case when ${ task.billing } in (5,6,7,8) then 'F' else 'T' end"
+			}
+		}
+	},
+	"program": {
+		"projectmap": {
+			"projectassets": "custentity_nx_assets[array]"
+		},
+		"projectrules": [{
+				"//": "PM Annual",
+				"project": [11],
+				"case": {
+					"type": 6,
+					"custevent_nx_case_asset": "${project.custentity_nx_asset}",
+					"custevent_nx_assets": "${project.projectassets}",
+					"details": "${project.comments}"
+				},
+				"interval": 12,
+				"unit": "month",
+				"create": true
+			},{
+				"//": "PM 6 Monthly",
+				"project": [12],
+				"case": {
+					"type": 6,
+					"custevent_nx_case_asset": "${project.custentity_nx_asset}",
+					"custevent_nx_assets": "${project.projectassets}",
+					"details": "${project.comments}"
+				},
+				"interval": 6,
+				"unit": "month",
+				"create": true
+			},{
+				"//": "PM Quarterly",
+				"project": [13],
+				"case": {
+					"type": 6,
+					"custevent_nx_case_asset": "${project.custentity_nx_asset}",
+					"custevent_nx_assets": "${project.projectassets}",
+					"details": "${project.comments}"
+				},
+				"interval": 3,
+				"unit": "month",
+				"create": true
+			},{
+				"//": "PM Monthly",
+				"project": [14],
+				"case": {
+					"type": 6,
+					"custevent_nx_case_asset": "${project.custentity_nx_asset}",
+					"custevent_nx_assets": "${project.projectassets}",
+					"details": "${project.comments}"
+				},
+				"interval": 1,
+				"unit": "month",
+				"create": true
+			},{
+				"//": "PM Weekly",
+				"project": [15],
+				"case": {
+					"type": 6,
+					"custevent_nx_case_asset": "${project.custentity_nx_asset}",
+					"custevent_nx_assets": "${project.projectassets}",
+					"details": "${project.comments}"
+				},
+				"interval": 7,
+				"unit": "day",
+				"create": true
+			}],
+		"caserules": [{
+				"//": "1 Case 1 Task",
+				"project": [11,12,13,14,15],
+				"case": [6],
+				"offset": 0,
+				"task": {
+					"type": 3
+				}
+			}]
+	},
+	"recurrence": {
+		"casefields": ["custevent_nx_case_details","contact"],
+		"taskfields": ["title","message"]
+	},
+	"status": {
+		"taskCloseFormula": "formulatext:case when {custevent_nx_task_outcome.id} in (1) then '5' end"
+	},
+	"routes/mobile": {
+		"log": false,
+		"addable": true,
+		"import": {
+			"//nxc_expressions": "/SuiteScripts/FSM/nxc_dynamic_expressions_20230927.js"
+		},
+		"event": {
+			"article": {
+				"task": {
+					"//filters": [
+						[
+							["assigned","anyof","${ user.internalid }"],"or",
+							["custevent_nx_task_team","anyof","${ user.internalid }"]
+						],"and",
+						["custevent_nx_task_type","noneof","@NONE@"],"and",
+						[
+							["startdate","onorafter","fiveDaysAgo"],"or",
+							["status","noneof","COMPLETE"]
+						],"and",
+						["startdate","onorbefore","fiveDaysFromNow"]
+					],
+					"map": {
+						"label": "formulatext:nvl2({case.custevent_nx_case_type}, {case.custevent_nx_case_type}||' ', '')||coalesce({custevent_nx_customer.companyname},trim({custevent_nx_customer.firstname}||' '||{custevent_nx_customer.lastname}),{custevent_nx_task_type})",
+						"body": "formulatext:nvl2({case.casenumber}, '<p>Case Number: '||{case.casenumber}||'</p><p>Case Type: '||{case.custevent_nx_case_type}||'</p>', '')||nvl2({case.custevent_nx_case_details}, '<p>Case Details: '||case when length(regexp_replace(trim({case.custevent_nx_case_details}),'['||CHR(13)||']','<br>')) > 1900 then substr(regexp_replace(trim({case.custevent_nx_case_details}),'['||CHR(13)||']','<br>'),0,1900)||' ...' else regexp_replace(trim({case.custevent_nx_case_details}),'['||CHR(13)||']','<br>') end|| '</p>', '')|| nvl2({custevent_nx_task_number}, '<p>Task Number: '||{custevent_nx_task_number}||'</p><p>Task Type: '||{custevent_nx_task_type}||'</p>', '')||nvl2({message}, '<p>Task Details: '||case when length(regexp_replace(trim({message}),'['||CHR(13)||']','<br>')) > 1900 then substr(regexp_replace(trim({message}),'['||CHR(13)||']','<br>'),0,1900)||' ...' else regexp_replace(trim({message}),'['||CHR(13)||']','<br>') end|| '</p>', '')",
+						"caseassets": "formulatext[]:nvl({case.custevent_nx_assets.id},0)",
+						"sublabel": "formulatext:{custevent_nx_task_type}||' ('||{custevent_nx_task_number}||') - '||NVL2({custevent_nx_task_asset.name},{custevent_nx_task_asset.name}||' ', '')||NVL2({custevent_nx_task_team}, NVL2({assigned.internalid}, ' | LEAD: '||{assigned.entityid}, '') || '  |  TEAM: '||replace({custevent_nx_task_team},',',', '), '')"
+					},
+					"resources": [{
+							"//": "Project Type = Any,  Case Type= Install, Task Type = Service, Asset Type = Site",
+							"project": [true],
+							"case": [5,6,7,8],
+							"task": [3,4,5,6,7,8,9,10],
+							"assettype": 1,
+							"resources": {
+								"array": true,
+								"parent": ["smartcompletionblocker","asset","contact","jobsafety","installedassets"],
+								"child": {
+									"record": "customrecord_nx_asset",
+									"filters": [
+										[
+											[
+												["formulatext:'${ event.caseassets }'","isnot","0"],"and",
+												["internalid","anyof","${ event.caseassets }"]
+											],"or",
+											[
+												["formulatext:'${ event.caseassets }'","is","0"],"and",
+												["parent","anyof","${ event.asset }"]
+											]
+										],"and",
+										["internalid","noneof",{
+												"array": true,
+												"default": "0",
+												"assets": {
+													"record": "customrecord_nx_install",
+													"filters": [
+														["custrecord_nx_install_case","anyof","${ event.supportcase }"],"and",
+														["custrecord_nx_install_task","noneof","${ event.internalid }"]
+													],
+													"map": "custrecord_nx_install_asset"
+												}
+											}]
+									],
+									"map": [{
+											"id": "formulatext:'asset-'||{internalid}",
+											"label": "formulatext:replace({name}, {parent} || ' : ')",
+											"asset": "internalid",
+											"assettype": "custrecord_nx_asset_type"
+										},{
+											"id": "formulatext:'install-'||{internalid}",
+											"parent": "formulatext:'asset-'||{internalid}",
+											"asset": "internalid",
+											"assettype": "custrecord_nx_asset_type"
+										},{
+											"id": "formulatext:'consumables-'||{internalid}",
+											"parent": "formulatext:'asset-'||{internalid}",
+											"asset": "internalid",
+											"assettype": "custrecord_nx_asset_type"
+										},{
+											"id": "formulatext:'servicehistory-'||{internalid}",
+											"parent": "formulatext:'asset-'||{internalid}",
+											"asset": "internalid"
+										}]
+								},
+								"parent2": ["smartcompletionblocker","times","newdetails","casesignatures","expenses","files","actions"]
+							}
+						},{
+							"//": "Project Type = Any,  Case Type= Install, Task Type = Service, Asset Type = Not Site",
+							"project": [true],
+							"case": [5],
+							"task": [3],
+							"resources": {
+								"array": true,
+								"parent": ["smartcompletionblocker","asset","contact","jobsafety","install","salesorder","history","times","newdetails","casesignatures","expenses","files","actions"]
+							}
+						},{
+							"//": "Project Type = Any,  Case Type= Maintenance, Task Type = Service, Asset Type = Site",
+							"project": [true],
+							"case": [6],
+							"task": [3,5],
+							"assettype": 1,
+							"resources": {
+								"array": true,
+								"parent": ["smartcompletionblocker","asset","contact","jobsafety","maintainedassets"],
+								"child": {
+									"record": "customrecord_nx_asset",
+									"filters": [
+										[
+											[
+												["formulatext:'${ event.caseassets }'","isnot","0"],"and",
+												["internalid","anyof","${ event.caseassets }"]
+											],"or",
+											[
+												["formulatext:'${ event.caseassets }'","is","0"],"and",
+												["parent","anyof","${ event.asset }"]
+											]
+										],"and",
+										["internalid","noneof",{
+												"array": true,
+												"default": "0",
+												"assets": {
+													"record": "customrecord_nx_maintenance",
+													"filters": [
+														["custrecord_nx_maintenance_case","anyof","${ event.supportcase }"],"and",
+														["custrecord_nx_maintenance_task","noneof","${ event.internalid }"]
+													],
+													"map": "custrecord_nx_maintenance_asset"
+												}
+											}]
+									],
+									"map": [{
+											"id": "formulatext:'asset-'||{internalid}",
+											"label": "formulatext:replace({name}, {parent} || ' : ')",
+											"asset": "internalid",
+											"assettype": "custrecord_nx_asset_type"
+										},{
+											"id": "formulatext:'maintenance-'||{internalid}",
+											"parent": "formulatext:'asset-'||{internalid}",
+											"asset": "internalid",
+											"assettype": "custrecord_nx_asset_type"
+										},{
+											"id": "formulatext:'consumables-'||{internalid}",
+											"parent": "formulatext:'asset-'||{internalid}",
+											"asset": "internalid",
+											"assettype": "custrecord_nx_asset_type"
+										},{
+											"id": "formulatext:'servicehistory-'||{internalid}",
+											"parent": "formulatext:'asset-'||{internalid}",
+											"asset": "internalid"
+										}]
+								},
+								"parent2": ["times","newdetails","casesignatures","expenses","files","actions"]
+							}
+						},{
+							"//": "Project Type = Any,  Case Type= Maintenance, Task Type = Service, Asset Type = Not Site",
+							"project": [true],
+							"case": [6],
+							"task": [3,5],
+							"resources": {
+								"array": true,
+								"parent": ["smartcompletionblocker","asset","contact","jobsafety","maintenance","salesorder","history","times","newdetails","casesignatures","expenses","files","actions"]
+							}
+						},{
+							"//": "Project Type = Any,  Case Type= Repair, Task Type = Service | Training,  Asset Type = Site",
+							"project": [true],
+							"case": [7],
+							"task": [3,5],
+							"assettype": 1,
+							"resources": {
+								"array": true,
+								"parent": ["smartcompletionblocker","asset","contact","jobsafety","consumables","repairedassets"],
+								"child": {
+									"record": "customrecord_nx_asset",
+									"filters": [
+										[
+											[
+												["formulatext:'${ event.caseassets }'","isnot","0"],"and",
+												["internalid","anyof","${ event.caseassets }"]
+											],"or",
+											[
+												["formulatext:'${ event.caseassets }'","is","0"],"and",
+												["parent","anyof","${ event.asset }"]
+											]
+										],"and",
+										["internalid","noneof",{
+												"array": true,
+												"default": "0",
+												"assets": {
+													"record": "customrecord_nx_repair",
+													"filters": [
+														["custrecord_nx_repair_case","anyof","${ event.supportcase }"],"and",
+														["custrecord_nx_repair_task","noneof","${ event.internalid }"]
+													],
+													"map": "custrecord_nx_repair_asset"
+												}
+											}]
+									],
+									"map": [{
+											"id": "formulatext:'asset-'||{internalid}",
+											"label": "formulatext:replace({name}, {parent} || ' : ')",
+											"asset": "internalid",
+											"assettype": "custrecord_nx_asset_type"
+										},{
+											"id": "formulatext:'repair-'||{internalid}",
+											"parent": "formulatext:'asset-'||{internalid}",
+											"asset": "internalid",
+											"assettype": "custrecord_nx_asset_type"
+										},{
+											"id": "formulatext:'consumables-'||{internalid}",
+											"parent": "formulatext:'asset-'||{internalid}",
+											"asset": "internalid",
+											"assettype": "custrecord_nx_asset_type"
+										},{
+											"id": "formulatext:'servicehistory-'||{internalid}",
+											"parent": "formulatext:'asset-'||{internalid}",
+											"asset": "internalid"
+										}]
+								},
+								"parent2": ["times","newdetails","casesignatures","expenses","files","actions"]
+							}
+						},{
+							"//": "Project Type = Any,  Case Type= Repair, Task Type = Service | Training,  Asset Type = Not Site",
+							"project": [true],
+							"case": [7],
+							"task": [3,5],
+							"resources": {
+								"array": true,
+								"parent": ["smartcompletionblocker","asset","contact","jobsafety","repair","salesorder","history","times","newdetails","casesignatures","expenses","files","actions"]
+							}
+						},{
+							"//": "Catchall",
+							"project": [true,false],
+							"case": [true,false],
+							"task": true,
+							"resources": []
+						}]
+				},
+				"projecttask": {
+					"resources": [{
+							"//": "Catch All",
+							"project": true,
+							"task": true,
+							"resources": ["genericcompletionblocker","contact","salesorder","history","times","files"]
+						}]
+				}
+			}
+		},
+		"inventory": {
+			"element": {
+				"consumable": {
+					"options": {
+						"noninventory": {
+							"record": "item",
+							"filters": [
+								["internalid","noneof","@NONE@"],"and",
+								["custitem_nx_show_on_mobile","is","T"],"and",
+								["isinactive","is","F"],"and",
+								["type","is",
+									["NonInvtPart","OthCharge"]
+								]
+							],
+							"map": {
+								"id": "formulatext:'item-'||{internalid}||'---'",
+								"label": "formulatext:NVL({displayname}, {name})",
+								"item": {
+									"id": "internalid",
+									"label": "formulatext:{itemid}"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"asset": {
+			"label": "${ event.assettype == '1' ? 'Site Details' : 'Asset Details' }",
+			"readonly": true,
+			"form": {
+				"customform": "555",
+				"//customform": "${ options.asset ? 369 : ( event.assettype == '1' ? 368 : 369 ) }",
+				"exclude": ["name","custrecord_nx_asset_transaction","custrecord_nx_asset_address","custrecord_nx_asset_longitude","custrecord_nx_asset_latitude","custrecord_nx_asset_time_zone"]
+			},
+			"icon": "wrench",
+			"element": {
+				"image": {
+					"hidden": true
+				},
+				"description": {
+					"hidden": true
+				}
+			}
+		},
+		"addchildasset": {
+			"//": "This tab allows additional of new child assets the the existing attached to the customer, with the exception of Item and Serial fields, and allows new assets to be created.  Filters for Item need to be set",
+			"label": "Add Child Asset",
+			"icon": "wrench",
+			"search": true,
+			"max": 0,
+			"element": {
+				"image": {
+					"type": "image",
+					"readonly": true,
+					"hidden": true
+				},
+				"custrecord_nx_asset_item": {
+					"label": "Item",
+					"type": "select",
+					"class": "el-6",
+					"readonly": "internalid.value",
+					"options": {
+						"record": "item",
+						"all": true,
+						"filters": ["custitem_nx_asset","is","T"],
+						"map": {
+							"id": "internalid",
+							"label": "formulatext: {itemid}||' '||{displayname}"
+						}
+					}
+				},
+				"description": {
+					"type": "textarea",
+					"label": "Description",
+					"readonly": true,
+					"hidden": true
+				},
+				"custrecord_nx_asset_serial": {
+					"type": "text",
+					"label": "Serial",
+					"readonly": "internalid.value"
+				},
+				"internalid": {
+					"type": "text",
+					"label": "ID",
+					"hidden": true,
+					"readonly": true
+				}
+			},
+			"article": {
+				"record": "customrecord_nx_asset",
+				"filters": [
+					["custrecord_nx_asset_customer","is","${ event.customer }"],"and",
+					["parent","noneof","@NONE@"]
+				],
+				"map": {
+					"image": {
+						"id": "=formulatext:nvl({custrecord_nx_asset_item.storedisplaythumbnail.id}, {custrecord_nx_asset_item.storedisplayimage.id})",
+						"url": "formulatext:'${ url }file/'||nvl({custrecord_nx_asset_item.storedisplaythumbnail.id}, {custrecord_nx_asset_item.storedisplayimage.id})||'&key=${ user.key }'"
+					},
+					"description": "custrecord_nx_asset_item.description|",
+					"custrecord_nx_asset_item": {
+						"id": "=custrecord_nx_asset_item",
+						"label": "formulatext: {custrecord_nx_asset_item.itemid}||' '||{custrecord_nx_asset_item.displayname}"
+					},
+					"custrecord_nx_asset_serial": "custrecord_nx_asset_serial",
+					"internalid": "internalid"
+				},
+				"defaults": {
+					"custrecord_nx_asset_customer": "${ event.customer }",
+					"parent": "${ event.asset }"
+				}
+			}
+		},
+		"genericcompletionblocker": {
+			"icon": "page",
+			"label": "- Task Cannot Be Completed by User -",
+			"hidden": false,
+			"min": 1,
+			"max": 1,
+			"element": {
+				"instructions": {
+					"type": "text",
+					"label": "Instructions",
+					"readonly": true,
+					"value": "Please ignore this tab, it is not possible to complete this mandatory tab (or close this task). Only the Project Manager or Authorised Assignees can close it completely."
+				},
+				"nosave": {
+					"type": "inlinehtml",
+					"value": "<style>button[name=save] { display: none !important; }</style>"
+				}
+			}
+		},
+		"smartcompletionblocker": {
+			"icon": "page",
+			"label": "- Team Members cannot complete Tasks -",
+			"hidden": "${ !event.teamuser  }",
+			"min": "${ event.teamuser ? 1 : 0 }",
+			"max": 1,
+			"element": {
+				"instructions": {
+					"type": "text",
+					"label": "Instructions",
+					"readonly": true,
+					"value": "Please ignore this tab, it is not possible to complete this mandatory tab (or close this task). Only the Project Manager or Authorised Assignees can close it completely."
+				},
+				"nosave": {
+					"type": "inlinehtml",
+					"value": "<style>button[name=save] { display: none !important; }</style>"
+				}
+			}
+		},
+		"consumables": {
+			"enable": [],
+			"element": {
+				"quantity": {
+					"max": "seriallot.value || bin.value ? 1 : null"
+				}
+			},
+			"article": {
+				"map": {
+					"item": {
+						"label": "formulatext:{custrecord_nx_consitem.itemid} || ' : ' || NVL({custrecord_nx_consitem.displayname}, {custrecord_nx_consitem.name})"
+					}
+				}
+			}
+		},
+		"salesorder": {
+			"enable": "commenced",
+			"icon": "shoppingcart",
+			"article": {
+				"defaults": {
+					"customform": "231"
+				}
+			},
+			"element": {
+				"quantityavailable": {
+					"type": "text",
+					"label": "Quantity Available",
+					"class": "col-xs-0 col-sm-0 col-md-0",
+					"parent": "items",
+					"readonly": true,
+					"value": "var opt = (item.value && location.value) ? unique(consumable.options.filter(o=>{ return (o.item.id == item.value.id) && o.location && (o.location.id == location.value.id) }).filter(o=>{ return o.bin ? (o.bin.id == (bin.value && bin.value.id)) : true }).filter(o=>{ return o.lot ? (o.lot.id == (lot.value && lot.value.id)) : true }).filter(o=>{ return o.serial ? (o.serial.id == (serial.value && serial.value[0] && serial.value[0].id)) : true }))[0] : null; return opt ? opt.available : 0"
+				}
+			}
+		},
+		"times": {
+			"enable": "commenced",
+			"element": {
+				"item": {
+					"index": 10
+				},
+				"date": {
+					"index": 20
+				},
+				"//startcheck": {
+					"type": "checkbox",
+					"label": "Start Current Activity",
+					"index": 30,
+					"required": true
+				},
+				"//start_time": {
+					"type": "timeofday",
+					"label": "Start Timestamp",
+					"hidden": "!startcheck.value",
+					"index": 40,
+					"value": "nxc_now('time', startcheck.value)"
+				},
+				"//endcheck": {
+					"type": "checkbox",
+					"label": "End Current Activity",
+					"index": 50,
+					"required": true
+				},
+				"//end_time": {
+					"type": "timeofday",
+					"label": "End Timestamp",
+					"hidden": "!endcheck.value",
+					"index": 60,
+					"value": "nxc_now('time', endcheck.value)"
+				},
+				"duration": {
+					"precision": 2,
+					"max": 24,
+					"step": 0.25,
+					"min": 0.25,
+					"roundMins": 15,
+					"index": 70,
+					"//value": "nxc_timediff(start_time.value, end_time.value, 15, 2)"
+				},
+				"memo": {
+					"type": "textarea",
+					"label": "Description",
+					"index": 80
+				}
+			},
+			"article": {
+				"map": {
+					"memo": "memo",
+					"//startcheck": "custcol_nxc_start_check",
+					"//endcheck": "custcol_nxc_end_check",
+					"start_time": "custcol_nx_time_start",
+					"end_time": "custcol_nx_time_end"
+				}
+			}
+		},
+		"jobsafety": {
+			"enable": "commenced",
+			"icon": "clipboard",
+			"label": "Job Safety",
+			"min": 1,
+			"max": 1,
+			"form": {
+				"customform": "558",
+				"exclude": ["custrecord_nx_jobsafety_task","custrecord_nx_jobsafety_case","custrecord_nx_jobsafety_asset","custrecord_nx_jobsafety_completed_by","custrecord_nx_jobsafety_idem_key"]
+			},
+			"article": {
+				"record": "customrecord_nx_jobsafety",
+				"filters": [
+					["custrecord_nx_jobsafety_task","anyof","${ event.internalid }"],"and",
+					["custrecord_nx_jobsafety_completed_by","anyof","${ user.internalid }"]
+				],
+				"defaults": {
+					"custrecord_nx_jobsafety_task": "${ event.internalid }",
+					"custrecord_nx_jobsafety_completed_by": "${ user.internalid }"
+				}
+			}
+		},
+		"newdetails": {
+			"//": "Configured to give the mobile user control over whether a case is closed or not by checking or unchecking the case closed checkbox on the task",
+			"label": "Job Status",
+			"icon": "flag",
+			"min": 1,
+			"max": 1,
+			"enable": ["commenced","jobsafety"],
+			"element": {
+				"//arrivaltime": {
+					"type": "timeofday",
+					"label": "Arrival Time",
+					"class": "el-6",
+					"index": 1,
+					"hidden": "${ event.type != 3 }"
+				},
+				"//departuretime": {
+					"type": "timeofday",
+					"label": "Departure Time",
+					"class": "el-6",
+					"index": 2,
+					"hidden": "${ event.type != 3 }"
+				},
+				"actionstaken": {
+					"type": "textarea",
+					"label": "Actions Taken",
+					"placeholder": "...actions taken",
+					"class": "el-12",
+					"index": 3
+				},
+				"custevent_nx_task_outcome": {
+					"type": "select",
+					"label": "Result",
+					"class": "el-6",
+					"index": 4,
+					"required": true,
+					"options": {
+						"record": "customrecord_nx_task_outcome",
+						"filters": [
+							["isinactive","is","F"]
+						],
+						"map": {
+							"id": "internalid",
+							"label": "name"
+						}
+					}
+				}
+			},
+			"article": {
+				"record": "task",
+				"filters": "${ event.internalid }",
+				"map": {
+					"id": "internalid",
+					"//arrivaltime": "custevent_nxc_arrival_time",
+					"//departuretime": "custevent_nxc_departure_time",
+					"internalnote": "custevent_nx_internal_note",
+					"actionstaken": "custevent_nx_actions_taken",
+					"custevent_nx_task_outcome": {
+						"id": "=custevent_nx_task_outcome",
+						"label": "custevent_nx_task_outcome|#"
+					}
+				}
+			}
+		},
+		"signatures": {
+			"//": "Linked to the Task record, used to capture signatures at the task level",
+			"label": "Job Completion & Signatures",
+			"icon": "flag",
+			"min": 1,
+			"max": 1,
+			"hidden": "${ event.type != 3 }",
+			"enable": ["commenced","times","newdetails"],
+			"element": {
+				"previewreport": {
+					"readonly": true,
+					"type": "url",
+					"label": "Preview to Task Service Report",
+					"usesessionkey": true,
+					"text": "Preview",
+					"index": 0
+				},
+				"customername": {
+					"required": true,
+					"type": "text",
+					"label": "Customer Name"
+				},
+				"cust_signature": {
+					"type": "signature",
+					"label": "Customer Signature",
+					"required": true
+				},
+				"tech_name": {
+					"required": true,
+					"type": "select",
+					"label": "Technician Name",
+					"options": {
+						"record": "employee",
+						"filters": ["internalid","anyof","${user.internalid}"],
+						"map": {
+							"id": "internalid[integer]",
+							"label": "entityid"
+						}
+					},
+					"value": ""
+				},
+				"tech_signature": {
+					"type": "signature",
+					"label": "Technician Signature",
+					"required": true
+				}
+			},
+			"article": {
+				"record": "task",
+				"filters": "${ event.internalid }",
+				"map": {
+					"id": "internalid",
+					"tech_signature": "custevent_nx_technician_signature",
+					"cust_signature": "custevent_nx_customer_signature",
+					"customername": "custevent_nx_customer_name",
+					"previewreport": "formulatext:'api/models/task/'||{internalid}|| '/servicereport&pdf=true&template=servicereport'",
+					"techname": {
+						"id": "=custevent_nx_signoff_technician",
+						"label": "#custevent_nx_signoff_technician"
+					}
+				}
+			}
+		},
+		"casesignatures": {
+			"//": "Linked to the Case record, used to capture signatures at the case level",
+			"label": "Job Completion & Signatures",
+			"icon": "flag",
+			"min": 1,
+			"max": 1,
+			"enable": ["commenced","times","newdetails"],
+			"element": {
+				"previewreport": {
+					"readonly": true,
+					"type": "url",
+					"label": "Preview to Case Service Report",
+					"usesessionkey": true,
+					"text": "Preview",
+					"index": 0
+				},
+				"customername": {
+					"required": true,
+					"type": "text",
+					"label": "Onsite Supervisor Name"
+				},
+				"cust_signature": {
+					"type": "signature",
+					"label": "Onsite Supervisor Signature",
+					"required": true
+				},
+				"tech_name": {
+					"required": true,
+					"type": "select",
+					"label": "Technician Name",
+					"options": {
+						"record": "employee",
+						"filters": ["internalid","anyof","${user.internalid}"],
+						"map": {
+							"id": "internalid[integer]",
+							"label": "entityid"
+						}
+					},
+					"value": ""
+				},
+				"tech_signature": {
+					"type": "signature",
+					"label": "Technician Signature",
+					"required": true
+				}
+			},
+			"article": {
+				"record": "supportcase",
+				"filters": "${ event.supportcase }",
+				"map": {
+					"id": "internalid",
+					"tech_signature": "custevent_nx_technician_signature",
+					"tech_name": {
+						"id": "=custevent_nx_signoff_technician",
+						"label": "#custevent_nx_signoff_technician"
+					},
+					"cust_signature": "custevent_nx_customer_signature",
+					"customername": "custevent_nx_customer_name",
+					"previewreport": "formulatext:'api/models/case/'||{internalid}|| '/servicereport&pdf=true&template=servicereport'"
+				}
+			}
+		},
+		"install": {
+			"enable": ["commenced","jobsafety"],
+			"icon": "clipboard",
+			"label": "Install Record",
+			"max": 1,
+			"form": {
+				"customform": "559",
+				"exclude": ["custrecord_nx_install_asset","custrecord_nx_install_case","custrecord_nx_install_project","custrecord_nx_install_completed_by","custrecord_nx_install_idem_key","custrecord_nx_install_project_task"]
+			},
+			"element": {
+				"custrecord_nx_install_task": {
+					"type": "hidden",
+					"value": "${event.internalid}"
+				}
+			},
+			"article": {
+				"record": "customrecord_nx_install",
+				"filters": [
+					["custrecord_nx_install_case","anyof","${ event.supportcase }"]
+				],
+				"filterby": {
+					"asset": "${ options.asset || event.asset }"
+				},
+				"map": {
+					"id": "internalid",
+					"asset": "custrecord_nx_install_asset",
+					"custrecord_nx_install_task": "formulatext:'${event.internalid}'|custrecord_nx_install_task"
+				},
+				"defaults": {
+					"custrecord_nx_install_asset": "${ options.asset || event.asset }",
+					"custrecord_nx_install_case": "${ event.supportcase }",
+					"custrecord_nx_install_project": "${ event.job }",
+					"custrecord_nx_install_completed_by": "${ user.internalid }"
+				}
+			}
+		},
+		"installedassets": {
+			"icon": "clipboard",
+			"label": "Assets Installed",
+			"readonly": true,
+			"element": {
+				"taskdate": {
+					"label": "Task Date",
+					"type": "date",
+					"column": 0
+				},
+				"task": {
+					"label": "Task",
+					"type": "text",
+					"class": "el-12 el-sm-6 el-md-4",
+					"column": 1
+				},
+				"asset": {
+					"label": "Asset",
+					"type": "text",
+					"class": "el-12 el-sm-6 el-md-4",
+					"column": 2
+				}
+			},
+			"article": {
+				"record": "customrecord_nx_install",
+				"filters": [
+					["custrecord_nx_install_case","anyof","${ event.supportcase }"]
+				],
+				"map": {
+					"taskdate": "custrecord_nx_install_task.startdate|",
+					"task": "custrecord_nx_install_task#|",
+					"asset": "custrecord_nx_install_asset#|"
+				}
+			}
+		},
+		"maintenance": {
+			"enable": "commenced",
+			"icon": "clipboard",
+			"label": "Maintenance Record",
+			"max": 1,
+			"form": {
+				"customform": "560",
+				"exclude": ["custrecord_nx_maintenance_asset","custrecord_nx_maintenance_case","custrecord_nx_maintenance_project","custrecord_nx_maintenance_completed_by","custrecord_nx_maintenance_idem_key","custrecord_nx_maintenance_project_task"]
+			},
+			"element": {
+				"custrecord_nx_maintenance_task": {
+					"type": "hidden",
+					"value": "${event.internalid}"
+				}
+			},
+			"article": {
+				"record": "customrecord_nx_maintenance",
+				"filters": [
+					["custrecord_nx_maintenance_case","anyof","${ event.supportcase }"]
+				],
+				"filterby": {
+					"asset": "${ options.asset || event.asset }"
+				},
+				"map": {
+					"id": "internalid",
+					"asset": "custrecord_nx_maintenance_asset",
+					"custrecord_nx_maintenance_task": "formulatext:'${event.internalid}'|custrecord_nx_maintenance_task"
+				},
+				"defaults": {
+					"custrecord_nx_maintenance_asset": "${ options.asset || event.asset }",
+					"custrecord_nx_maintenance_case": "${ event.supportcase }",
+					"custrecord_nx_maintenance_project": "${ event.job }",
+					"custrecord_nx_maintenance_completed_by": "${ user.internalid }"
+				}
+			}
+		},
+		"maintainedassets": {
+			"icon": "clipboard",
+			"label": "Assets Maintained",
+			"readonly": true,
+			"element": {
+				"taskdate": {
+					"label": "Task Date",
+					"type": "date",
+					"column": 0
+				},
+				"task": {
+					"label": "Task",
+					"type": "text",
+					"class": "el-12 el-sm-6 el-md-4",
+					"column": 1
+				},
+				"asset": {
+					"label": "Asset",
+					"type": "text",
+					"class": "el-12 el-sm-6 el-md-4",
+					"column": 2
+				}
+			},
+			"article": {
+				"record": "customrecord_nx_maintenance",
+				"filters": [
+					["custrecord_nx_maintenance_case","anyof","${ event.supportcase }"]
+				],
+				"map": {
+					"taskdate": "custrecord_nx_maintenance_task.startdate|",
+					"task": "custrecord_nx_maintenance_task#|",
+					"asset": "custrecord_nx_maintenance_asset#|"
+				}
+			}
+		},
+		"repair": {
+			"enable": "commenced",
+			"icon": "clipboard",
+			"label": "Repair Record",
+			"max": 1,
+			"form": {
+				"customform": "556",
+				"exclude": ["custrecord_nx_repair_asset","custrecord_nx_repair_case","custrecord_nx_repair_project","custrecord_nx_repair_completed_by","custrecord_nx_repair_project_task","custrecord_nx_repair_idem_key","custrecord_nx_repair_project_task"]
+			},
+			"element": {
+				"custrecord_nx_repair_task": {
+					"type": "hidden",
+					"value": "${event.internalid}"
+				}
+			},
+			"article": {
+				"record": "customrecord_nx_repair",
+				"filters": [
+					["custrecord_nx_repair_case","anyof","${ event.supportcase }"]
+				],
+				"filterby": {
+					"asset": "${ options.asset || event.asset }"
+				},
+				"map": {
+					"id": "internalid",
+					"asset": "custrecord_nx_repair_asset",
+					"custrecord_nx_repair_task": "formulatext:'${event.internalid}'|custrecord_nx_repair_task"
+				},
+				"defaults": {
+					"custrecord_nx_repair_asset": "${ options.asset || event.asset }",
+					"custrecord_nx_repair_case": "${ event.supportcase }",
+					"custrecord_nx_repair_project": "${ event.job }",
+					"custrecord_nx_repair_completed_by": "${ user.internalid }"
+				}
+			}
+		},
+		"repairedassets": {
+			"icon": "clipboard",
+			"label": "Assets Repaired",
+			"readonly": true,
+			"element": {
+				"taskdate": {
+					"label": "Task Date",
+					"type": "date",
+					"column": 0
+				},
+				"task": {
+					"label": "Task",
+					"type": "text",
+					"class": "el-12 el-sm-6 el-md-4",
+					"column": 1
+				},
+				"asset": {
+					"label": "Asset",
+					"type": "text",
+					"class": "el-12 el-sm-6 el-md-4",
+					"column": 2
+				}
+			},
+			"article": {
+				"record": "customrecord_nx_repair",
+				"filters": [
+					["custrecord_nx_repair_case","anyof","${ event.supportcase }"]
+				],
+				"map": {
+					"taskdate": "custrecord_nx_repair_task.startdate|",
+					"task": "custrecord_nx_repair_task#|",
+					"asset": "custrecord_nx_repair_asset#|"
+				}
+			}
+		},
+		"servicehistory": {
+			"//": "This Tab is configured to support multi-asset servicing by showing history based on individual commissioning, maintenance and repair records associated with the asset.  Use as a base tab for child asset history",
+			"label": "Service History",
+			"icon": "bookmark",
+			"hidden": "${ !options.asset && !event.asset }",
+			"remote": true,
+			"readonly": true,
+			"article": {
+				"sortby": "sortdate",
+				"salesorder": {
+					"record": "salesorder",
+					"filters": ["custcol_nx_asset","anyof","${ options.asset || event.asset }"],
+					"map": {
+						"id": "*formulatext:'salesorder-'||{internalid}",
+						"sortdate": "formulatext:100000000 - to_number(to_char({trandate},'YYYYMMDD'))",
+						"date": "formulatext:to_char({trandate},'DD Mon YYYY')",
+						"recordtype": "formulatext:'Sales Order'",
+						"casetype": "#custcol_nx_case.custevent_nx_case_type",
+						"casenumber": "custcol_nx_case.casenumber",
+						"items": [{
+								"item": "#item",
+								"quantity": "quantity",
+								"displayname": "item.displayname|"
+							}]
+					},
+					"sync": "function(method, model, options) { var results = model.constructor.__super__.sync.apply(this, arguments); var ids = results.map(function(attributes) { return attributes.id }); for (var b = ids.length-1; b >= 0; b--) { var a = ids.indexOf(ids[b]); if (a < b) { for (var key in results[b]) results[a][key] = results[b][key]; results.splice(b, 1); } } return results; }"
+				},
+				"install": {
+					"record": "customrecord_nx_install",
+					"filters": [
+						["custrecord_nx_install_asset","anyof","${ options.asset }"]
+					],
+					"map": {
+						"id": "*formulatext:'install-'||{internalid}",
+						"sortdate": "formulatext:100000000 - to_number(to_char({created},'YYYYMMDD'))",
+						"date": "formulatext:to_char({created},'DD Mon YYYY')",
+						"recordtype": "formulatext:'Install Record'",
+						"casetype": "#custrecord_nx_install_case.custevent_nx_case_type",
+						"casenumber": "custrecord_nx_install_case.casenumber",
+						"installimage": {
+							"id": "=custrecord_nx_install_image",
+							"url": "formulatext:'${ url }file/'||{custrecord_nx_install_image.id}||'&key=${ user.key }'"
+						},
+						"installimage_thumb": "formulatext:'<img src=\"${url}file/'||{custrecord_nx_install_image.id}||'&key=${user.key}\" height=\"100\" />'",
+						"installoutcome": "#custrecord_nx_install_outcome",
+						"installnotes": "custrecord_nx_install_notes"
+					}
+				},
+				"maintenance": {
+					"record": "customrecord_nx_maintenance",
+					"filters": [
+						["custrecord_nx_maintenance_asset","anyof","${ options.asset }"]
+					],
+					"map": {
+						"id": "*formulatext:'maintenance-'||{internalid}",
+						"sortdate": "formulatext:100000000 - to_number(to_char({created},'YYYYMMDD'))",
+						"date": "formulatext:to_char({created},'DD Mon YYYY')",
+						"recordtype": "formulatext:'Maintenance Record'",
+						"casetype": "#custrecord_nx_maintenance_case.custevent_nx_case_type",
+						"casenumber": "custrecord_nx_maintenance_case.casenumber",
+						"maintenanceimage": {
+							"id": "=custrecord_nx_maintenance_image",
+							"url": "formulatext:'${ url }file/'||{custrecord_nx_maintenance_image.id}||'&key=${ user.key }'"
+						},
+						"maintenanceimage_thumb": "formulatext:'<img src=\"${url}file/'||{custrecord_nx_maintenance_image.id}||'&key=${user.key}\" height=\"100\" />'",
+						"maintenanceoutcome": "#custrecord_nx_maintenance_outcome",
+						"maintenancenotes": "custrecord_nx_maintenance_notes"
+					}
+				},
+				"repair": {
+					"record": "customrecord_nx_repair",
+					"filters": [
+						["custrecord_nx_repair_asset","anyof","${ options.asset }"]
+					],
+					"map": {
+						"id": "*formulatext:'repair-'||{internalid}",
+						"sortdate": "formulatext:100000000 - to_number(to_char({created},'YYYYMMDD'))",
+						"date": "formulatext:to_char({created},'DD Mon YYYY')",
+						"recordtype": "formulatext:'Repair Record'",
+						"casetype": "#custrecord_nx_repair_case.custevent_nx_case_type",
+						"casenumber": "custrecord_nx_repair_case.casenumber",
+						"repairimage": {
+							"id": "=custrecord_nx_repair_image",
+							"url": "formulatext:'${ url }file/'||{custrecord_nx_repair_image.id}||'&key=${ user.key }'"
+						},
+						"repairimage_thumb": "formulatext:'<img src=\"${url}file/'||{custrecord_nx_repair_image.id}||'&key=${user.key}\" height=\"100\" />'",
+						"repairoutcome": "#custrecord_nx_repair_outcome",
+						"repairnotes": "custrecord_nx_repair_notes"
+					}
+				}
+			},
+			"element": {
+				"date": {
+					"type": "text",
+					"label": "Date",
+					"column": 1
+				},
+				"recordtype": {
+					"type": "text",
+					"label": "Type",
+					"column": 2
+				},
+				"casetype": {
+					"type": "text",
+					"label": "Case Type",
+					"column": 3
+				},
+				"casenumber": {
+					"type": "text",
+					"label": "Case Number",
+					"column": 4
+				},
+				"items": {
+					"label": "PARTS & CHARGES",
+					"type": "table",
+					"hidden": "items.value && items.value.length == 0"
+				},
+				"item": {
+					"label": "Item",
+					"type": "text",
+					"parent": "items",
+					"column": 1
+				},
+				"displayname": {
+					"label": "Item Name",
+					"type": "text",
+					"parent": "items",
+					"column": 2
+				},
+				"quantity": {
+					"label": "Quantity",
+					"type": "number",
+					"parent": "items",
+					"column": 3
+				},
+				"installimage_thumb": {
+					"type": "inlinehtml",
+					"hidden": "!crimage1.value",
+					"label": "Install Image"
+				},
+				"installimage": {
+					"type": "image",
+					"hidden": "!this.attributes.value",
+					"label": "Install Image"
+				},
+				"installoutcome": {
+					"type": "text",
+					"hidden": "!this.attributes.value",
+					"label": "Install Outcome"
+				},
+				"installnotes": {
+					"type": "text",
+					"hidden": "!this.attributes.value",
+					"label": "Install Notes"
+				},
+				"maintenanceimage_thumb": {
+					"type": "inlinehtml",
+					"hidden": "!mrimage1.value",
+					"label": "Maintenance Image"
+				},
+				"maintenanceimage": {
+					"type": "image",
+					"hidden": "!this.attributes.value",
+					"label": "Maintenance Image"
+				},
+				"maintenanceoutcome": {
+					"type": "text",
+					"hidden": "!this.attributes.value",
+					"label": "Maintenance Outcome"
+				},
+				"maintenancenotes": {
+					"type": "text",
+					"hidden": "!this.attributes.value",
+					"label": "Maintenance Notes"
+				},
+				"repairimage_thumb": {
+					"type": "inlinehtml",
+					"hidden": "!this.attributes.value",
+					"label": "Repair Image"
+				},
+				"repairimage": {
+					"type": "image",
+					"hidden": "!rrimage1.value",
+					"label": "Repair Image"
+				},
+				"repairoutcome": {
+					"type": "text",
+					"hidden": "!this.attributes.value",
+					"label": "Repair Outcome"
+				},
+				"repairnotes": {
+					"type": "text",
+					"hidden": "!this.attributes.value",
+					"label": "Repair Notes"
+				}
+			}
+		},
+		"files": {
+			"label": "Files",
+			"min": null
+		}
+	},
+	"routes/scheduler": {
+		"//": "6am - 7pm",
+		"start": 6,
+		"end": 17,
+		"groups": ["regiontext"],
+		"assignedpanel": {
+			"filter": {
+				"casetype": {
+					"label": "Case Type",
+					"column": "casetype",
+					"options": {
+						"record": "customrecord_nx_case_type",
+						"map": {
+							"id": "internalid",
+							"label": "name"
+						}
+					}
+				}
+			}
+		},
+		"unassignedpanel": {
+			"filter": {
+				"casetype": {
+					"label": "Case Type",
+					"column": "casetype",
+					"options": {
+						"record": "customrecord_nx_case_type",
+						"map": {
+							"id": "internalid",
+							"label": "name"
+						}
+					}
+				}
+			}
+		},
+		"views": {
+			"day": {
+				"index": 1
+			},
+			"three": {
+				"index": 2
+			},
+			"five": {
+				"label": "5 Days",
+				"unit": "days",
+				"index": 3,
+				"start": -2,
+				"end": 2
+			},
+			"seven": {
+				"index": 4
+			},
+			"fifteen": {
+				"index": 5
+			},
+			"thirtyone": {
+				"index": 6
+			}
+		},
+		"event": {
+			"task": {
+				"map": {
+					"link": false,
+					"download": "formulatext:'${ url.api }/models/case/'||{case.internalid}||'/servicereport&template=servicereport&pdf=true'",
+					"casetype": "case.custevent_nx_case_type|"
+				}
+			}
+		}
+	},
+	"views/schedule": {
+		"hidden": false
+	},
+	"notification": {
+		"taskrules": [],
+		"caserules": [],
+		"taskemail": {
+			"servicereport": {
+				"attachments": {
+					"servicereport": {
+						"contents": {
+							"template": "templates/taskreport2.xml",
+							"logosizes": {
+								"target": {
+									"type": "height",
+									"value": 46
+								},
+								"company": {
+									"width": 500,
+									"height": 180
+								}
+							},
+							"body": {
+								"api": "{api}",
+								"imgdpisml": "500",
+								"imgdpimed": "325",
+								"imgdpilrg": "200"
+							},
+							"asset": {
+								"record": "customrecord_nx_asset",
+								"id": "${task.asset}"
+							},
+							"case": {
+								"record": "supportcase",
+								"id": "${task.case}"
+							},
+							"salesorder": {
+								"map": {
+									"memo": "memo",
+									"custcol_nx_task": "custcol_nx_task"
+								}
+							},
+							"time": {
+								"map": {
+									"employee": "employee",
+									"date": "date",
+									"custcol_nx_task": "custcol_nx_task"
+								}
+							},
+							"expensereport": {
+								"map": {
+									"custcol_nx_task": "custcol_nx_task",
+									"trandate": "trandate",
+									"expensecategory": "expensecategory",
+									"memo": "memo"
+								}
+							},
+							"install": {
+								"record": "customrecord_nx_install",
+								"filters": [
+									["custrecord_nx_install_task","anyof","${task.id}"]
+								],
+								"form": {
+									"customform": "559"
+								},
+								"objectify": false
+							},
+							"maintenance": {
+								"record": "customrecord_nx_maintenance",
+								"filters": [
+									["custrecord_nx_maintenance_task","anyof","${task.id}"]
+								],
+								"form": {
+									"customform": "560"
+								},
+								"objectify": false
+							},
+							"repair": {
+								"record": "customrecord_nx_repair",
+								"filters": [
+									["custrecord_nx_repair_task","anyof","${task.id}"]
+								],
+								"form": {
+									"customform": "556"
+								},
+								"objectify": false
+							},
+							"uninstall": {
+								"record": "customrecord_nx_uninstall",
+								"filters": [
+									["custrecord_nx_uninstall_task","anyof","${task.id}"]
+								],
+								"form": {
+									"customform": "557"
+								},
+								"objectify": false
+							}
+						}
+					}
+				}
+			}
+		},
+		"caseemail": {
+			"servicereport": {
+				"attachments": {
+					"servicereport": {
+						"contents": {
+							"template": "templates/casereport3prodnb2sm.xml",
+							"logosizes": {
+								"target": {
+									"type": "height",
+									"value": 46
+								},
+								"company": {
+									"width": 500,
+									"height": 180
+								}
+							},
+							"case": {
+								"record": "supportcase",
+								"id": "${supportcase.id}"
+							},
+							"tasks": {
+								"record": "task",
+								"map": {
+									"internalid": "internalid",
+									"custevent_nx_task_type": "custevent_nx_task_type",
+									"assigned": "assigned",
+									"custevent_nx_task_team": "custevent_nx_task_team",
+									"message": "message",
+									"custevent_nx_actions_taken": "custevent_nx_actions_taken",
+									"custevent_nx_signoff_technician": "custevent_nx_signoff_technician",
+									"custevent_nx_technician_signature": "custevent_nx_technician_signature",
+									"custevent_nx_customer_name": "custevent_nx_customer_name",
+									"custevent_nx_customer_signature": "custevent_nx_customer_signature",
+									"custevent_nx_start_date": "custevent_nx_start_date",
+									"custevent_nx_start_time": "custevent_nx_start_time"
+								},
+								"objectify": false
+							},
+							"body": {
+								"api": "{api}",
+								"imgdpisml": "500",
+								"imgdpimed": "325",
+								"imgdpilrg": "200"
+							},
+							"asset": {
+								"record": "customrecord_nx_asset",
+								"id": "${supportcase.asset}"
+							},
+							"salesorder": {
+								"map": {
+									"memo": "memo"
+								}
+							},
+							"times": {
+								"map": {
+									"employee": "employee",
+									"date": "date"
+								}
+							},
+							"expenses": {
+								"map": {
+									"custcol_nx_task": "custcol_nx_task",
+									"trandate": "trandate",
+									"expensecategory": "expensecategory",
+									"memo": "memo"
+								}
+							},
+							"install": {
+								"record": "customrecord_nx_install",
+								"filters": [
+									["custrecord_nx_install_case","anyof","${supportcase.id}"]
+								],
+								"form": {
+									"customform": "559"
+								},
+								"objectify": false
+							},
+							"maintenance": {
+								"record": "customrecord_nx_maintenance",
+								"filters": [
+									["custrecord_nx_maintenance_case","anyof","${supportcase.id}"]
+								],
+								"form": {
+									"customform": "560"
+								},
+								"objectify": false
+							},
+							"repair": {
+								"record": "customrecord_nx_repair",
+								"filters": [
+									["custrecord_nx_repair_case","anyof","${supportcase.id}"]
+								],
+								"form": {
+									"customform": "556"
+								},
+								"objectify": false
+							},
+							"uninstall": {
+								"record": "customrecord_nx_uninstall",
+								"filters": [
+									["custrecord_nx_uninstall_case","anyof","${supportcase.id}"]
+								],
+								"form": {
+									"customform": "557"
+								},
+								"objectify": false
+							},
+							"image": {
+								"record": "task",
+								"filters": [
+									["case.internalid","anyof","${supportcase.id}"],"and",
+									["formulatext:{file.filetype}","contains","image"]
+								],
+								"map": {
+									"description": "formulatext:regexp_replace({file.description}, '[\r\n]*{[^}]*}$', '')",
+									"url": "formulatext:'${ api }'||{file.internalid}"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

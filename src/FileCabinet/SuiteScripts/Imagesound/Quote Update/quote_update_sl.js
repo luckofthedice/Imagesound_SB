@@ -28,6 +28,7 @@ define(['N/record', 'N/url', 'N/log'], function(record, url, log) {
     function handleGet(context) {
         // Implement the logic for handling GET requests
         const quoteId = context.request.parameters.quoteId;
+        log.debug('Quote Update ID', quoteId);
         const rec = record.load({
             type: record.Type.ESTIMATE,
             id: quoteId,
